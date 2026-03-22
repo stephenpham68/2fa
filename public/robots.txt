@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://2fa-tools.pages.dev/sitemap.xml

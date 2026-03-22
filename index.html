@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Primary SEO -->
+    <title>Free 2FA Code Generator - TOTP Authenticator Online</title>
+    <meta name="description" content="Generate TOTP 2FA codes instantly from your secret key. 100% free, browser-based, no app needed. Works with Google Authenticator, Authy, and any TOTP-compatible app." />
+    <meta name="keywords" content="2fa generator, totp authenticator, 2fa code generator, two factor authentication, google authenticator online, totp online, 2fa online, otp generator" />
+    <meta name="author" content="2FA Tools" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://2fa-tools.pages.dev/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://2fa-tools.pages.dev/" />
+    <meta property="og:title" content="Free 2FA Code Generator - TOTP Authenticator Online" />
+    <meta property="og:description" content="Generate TOTP 2FA codes instantly from your secret key. 100% free, browser-based, no app needed. Works with Google Authenticator, Authy, and any TOTP-compatible app." />
+    <meta property="og:image" content="https://2fa-tools.pages.dev/og-image.png" />
+    <meta property="og:site_name" content="2FA Tools" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Free 2FA Code Generator - TOTP Authenticator Online" />
+    <meta name="twitter:description" content="Generate TOTP 2FA codes instantly from your secret key. 100% free, browser-based, no app needed." />
+    <meta name="twitter:image" content="https://2fa-tools.pages.dev/og-image.png" />
+
+    <!-- JSON-LD: WebApplication Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Free 2FA Code Generator",
+      "url": "https://2fa-tools.pages.dev/",
+      "description": "Generate TOTP 2FA codes instantly from your secret key. 100% free, browser-based, no app needed.",
+      "applicationCategory": "SecurityApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Generate TOTP 2FA codes from Base32 secret keys",
+        "Auto-refresh every 30 seconds",
+        "Support multiple accounts simultaneously",
+        "Copy to clipboard in one click",
+        "100% browser-based, no data sent to server"
+      ],
+      "creator": {
+        "@type": "Organization",
+        "name": "2FA Tools"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: FAQPage Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Two-Factor Authentication (2FA)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Two-Factor Authentication (2FA) adds a second layer of security to your accounts. In addition to your password, you also enter a 6-digit code that changes every 30 seconds. Even if someone steals your password, they cannot log in without this code."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my 2FA secret key safe to enter here?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. All processing happens 100% in your browser using the Web Crypto API. Your secret key is never sent to any server. You can verify this by checking your browser's network tab — no requests are made when generating codes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How often does the 2FA code change?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "TOTP codes refresh every 30 seconds, following the RFC 6238 standard. A countdown timer shows how many seconds remain before the current code expires. Codes expiring in 5 seconds or less are highlighted in red as a warning."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which apps and services support TOTP 2FA?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "TOTP is supported by thousands of services including Google, Facebook, Twitter, GitHub, Dropbox, Amazon, and most banking and crypto platforms. Compatible authenticator apps include Google Authenticator, Microsoft Authenticator, Authy, 1Password, Bitwarden, and many others."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
