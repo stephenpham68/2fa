@@ -99,6 +99,14 @@
     }
     </script>
 
+    <!-- Dark mode init: apply before React renders to prevent flash -->
+    <script>
+      (function() {
+        var t = localStorage.getItem('2fa-theme') || 'dark';
+        if (t === 'dark') document.documentElement.classList.add('dark');
+      })();
+    </script>
+
     <!-- Preconnect for fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

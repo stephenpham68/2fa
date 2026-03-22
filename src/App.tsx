@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { KeyRound, Copy, RefreshCw, Trash2, Check, Clock, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { KeyRound, Copy, RefreshCw, Trash2, Check, Clock, Shield, ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { generateTOTP, getTimeRemaining } from '@/lib/totpUtils';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Is my 2FA secret key safe to enter here?',
-    a: 'Yes. All processing happens 100% in your browser using the Web Crypto API. Your secret key is never sent to any server. You can verify this by opening your browser\'s DevTools Network tab — no requests are made when generating codes.',
+    a: "Yes. All processing happens 100% in your browser using the Web Crypto API. Your secret key is never sent to any server. You can verify this by opening your browser's DevTools Network tab — no requests are made when generating codes.",
   },
   {
     q: 'How often does the 2FA code change?',
@@ -29,7 +29,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Where do I find my 2FA secret key?',
-    a: 'When setting up 2FA on any website, they show a QR code AND a text secret key (usually labeled "Secret key" or "Manual entry key"). This tool uses that text secret key. It\'s a Base32 string like: JBSWY3DPEHPK3PXP.',
+    a: "When setting up 2FA on any website, they show a QR code AND a text secret key (usually labeled \"Secret key\" or \"Manual entry key\"). This tool uses that text secret key. It's a Base32 string like: JBSWY3DPEHPK3PXP.",
   },
 ];
 
@@ -64,7 +64,18 @@ export default function App() {
   const [timeRemaining, setTimeRemaining] = useState(getTimeRemaining());
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDark, setIsDark] = useState(
+    () => document.documentElement.classList.contains('dark')
+  );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function toggleTheme() {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle('dark', next);
+    localStorage.setItem('2fa-theme', next ? 'dark' : 'light');
+  }
 
   const regenerateCodes = useCallback(async () => {
     const updatedResults = await Promise.all(
@@ -97,32 +108,56 @@ export default function App() {
     };
   }, [results.length, regenerateCodes]);
 
-  async function handleGetCode() {
-    const trimmedSecret = secretInput.trim();
-    if (!trimmedSecret) {
+  const handleGetCode = useCallback(async (overrideText?: string) => {
+    const raw = (overrideText ?? secretInput).trim();
+    if (!raw) {
       toast.error('Please enter a 2FA secret key');
       return;
     }
 
-    const normalizedNew = trimmedSecret.replace(/[\s-]/g, '').toUpperCase();
-    if (results.some((r) => r.secret.replace(/[\s-]/g, '').toUpperCase() === normalizedNew)) {
-      toast.error('This secret key is already in the list');
-      return;
-    }
+    const lines = raw.split('\n').map((l) => l.trim()).filter(Boolean);
 
     setIsGenerating(true);
-    const code = await generateTOTP(trimmedSecret);
+    const newResults: TOTPResult[] = [];
+    let skipped = 0;
+
+    for (const line of lines) {
+      const normalized = line.replace(/[\s-]/g, '').toUpperCase();
+      if (results.some((r) => r.secret.replace(/[\s-]/g, '').toUpperCase() === normalized)) {
+        skipped++;
+        continue;
+      }
+      const code = await generateTOTP(line);
+      if (code) {
+        newResults.push({ secret: line, code, timestamp: Date.now() });
+      }
+    }
+
     setIsGenerating(false);
 
-    if (!code) {
-      toast.error('Invalid secret key. Please check the format.');
+    if (newResults.length === 0) {
+      toast.error(skipped > 0 ? 'All secrets already in the list' : 'No valid secret keys found');
       return;
     }
 
-    setResults((prev) => [{ secret: trimmedSecret, code, timestamp: Date.now() }, ...prev]);
+    setResults((prev) => [...prev, ...newResults]);
     setSecretInput('');
-    toast.success('2FA code generated');
-  }
+    toast.success(`Generated ${newResults.length} code${newResults.length > 1 ? 's' : ''}`);
+  }, [secretInput, results]);
+
+  // Global paste: Ctrl+V anywhere on the page (when not focused in textarea)
+  useEffect(() => {
+    function onGlobalPaste(e: ClipboardEvent) {
+      if (document.activeElement === textareaRef.current) return;
+      const text = e.clipboardData?.getData('text')?.trim() || '';
+      if (!text) return;
+      e.preventDefault();
+      setSecretInput(text);
+      handleGetCode(text);
+    }
+    window.addEventListener('paste', onGlobalPaste);
+    return () => window.removeEventListener('paste', onGlobalPaste);
+  }, [handleGetCode]);
 
   function handleCopy(text: string, index: number) {
     navigator.clipboard.writeText(text);
@@ -168,7 +203,7 @@ export default function App() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 shrink-0">
             <Shield className="h-5 w-5 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="font-bold text-base sm:text-lg text-primary leading-tight">
               Free 2FA Code Generator
             </h1>
@@ -176,6 +211,13 @@ export default function App() {
               TOTP Authenticator Online &mdash; 100% browser-based, RFC 6238
             </p>
           </div>
+          <button
+            onClick={toggleTheme}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="h-9 w-9 rounded-lg border border-border hover:bg-muted transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
         </div>
       </header>
 
@@ -193,30 +235,36 @@ export default function App() {
               Supports Google Authenticator, Authy, Microsoft Authenticator, and any TOTP-compatible app.
             </p>
 
-            {/* Input Row */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="e.g., JBSWY3DPEHPK3PXP or prf5 3c5j 2j37 b7zy..."
+            {/* Textarea + Button */}
+            <div className="flex gap-2 items-start">
+              <textarea
+                ref={textareaRef}
+                rows={3}
+                placeholder={"e.g., JBSWY3DPEHPK3PXP\nor paste multiple secrets, one per line"}
                 value={secretInput}
                 onChange={(e) => setSecretInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleGetCode()}
-                className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    handleGetCode();
+                  }
+                }}
+                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
                 autoComplete="off"
                 spellCheck={false}
                 aria-label="2FA secret key input"
               />
               <button
-                onClick={handleGetCode}
+                onClick={() => handleGetCode()}
                 disabled={isGenerating}
-                className="h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0 flex items-center gap-2"
+                className="h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0 flex items-center gap-2 mt-0"
               >
                 <KeyRound className="h-4 w-4" />
                 <span className="hidden sm:inline">Get Code</span>
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Formats supported: continuous string, spaced groups, or dashes. Keys are never sent to any server.
+              Paste anywhere on the page (Ctrl+V) to auto-generate. Multiple secrets: one per line. Ctrl+Enter to submit.
             </p>
           </div>
         </section>
@@ -269,9 +317,11 @@ export default function App() {
                     key={`${result.secret}-${idx}`}
                     className="p-4 rounded-lg bg-secondary/50 border border-border space-y-3"
                   >
-                    {/* Output row: secret|code */}
+                    {/* Number badge + Output row */}
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground shrink-0">Output:</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                        {idx + 1}
+                      </span>
                       <code className={cn(
                         'flex-1 font-mono text-sm bg-background px-3 py-2 rounded border overflow-x-auto whitespace-nowrap transition-colors',
                         isExpiringSoon ? 'border-destructive/50' : 'border-border'
