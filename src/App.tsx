@@ -349,10 +349,14 @@ export default function App() {
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">Code:</span>
-                        <span className={cn(
-                          'font-mono text-2xl font-bold tracking-widest transition-colors',
-                          isExpiringSoon ? 'text-destructive animate-pulse' : 'text-primary'
-                        )}>
+                        <span
+                          onClick={() => handleCopyCode(result.code, idx)}
+                          title="Click to copy code"
+                          className={cn(
+                            'font-mono text-2xl font-bold tracking-widest cursor-pointer select-none transition-opacity hover:opacity-70',
+                            isExpiringSoon ? 'text-destructive animate-pulse' : 'text-primary'
+                          )}
+                        >
                           {result.code.slice(0, 3)} {result.code.slice(3)}
                         </span>
                       </div>
