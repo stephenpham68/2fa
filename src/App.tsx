@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { KeyRound, Copy, RefreshCw, Trash2, Check, Clock, Shield, ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react';
+import { KeyRound, Copy, RefreshCw, Trash2, Check, Clock, Shield, ChevronDown, ChevronUp, Sun, Moon, Github } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { generateTOTP, getTimeRemaining } from '@/lib/totpUtils';
 import { cn } from '@/lib/utils';
@@ -459,13 +459,22 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-border mt-12">
-        <div className="max-w-4xl mx-auto px-4 py-6 text-center text-xs text-muted-foreground space-y-1">
+        <div className="max-w-4xl mx-auto px-4 py-6 text-center text-xs text-muted-foreground space-y-2">
           <p>
             Free 2FA Code Generator &mdash; TOTP Authenticator Online
           </p>
           <p>
             All cryptographic operations run locally in your browser. No data is stored or transmitted.
           </p>
+          <a
+            href="https://github.com/stephenpham68/2fa"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+          >
+            <Github className="h-3.5 w-3.5" />
+            Open source on GitHub
+          </a>
         </div>
       </footer>
     </>
