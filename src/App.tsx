@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { KeyRound, Copy, RefreshCw, Trash2, Check, Clock, Shield, ChevronDown, ChevronUp, Sun, Moon, Github } from 'lucide-react';
+import { KeyRound, Copy, RefreshCw, Trash2, Check, Clock, Shield, ChevronDown, ChevronUp, Sun, Moon, Github, LayoutList, LayoutGrid } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { generateTOTP, getTimeRemaining } from '@/lib/totpUtils';
 import { cn } from '@/lib/utils';
@@ -64,11 +64,19 @@ export default function App() {
   const [timeRemaining, setTimeRemaining] = useState(getTimeRemaining());
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>(
+    () => (localStorage.getItem('2fa-view') as 'list' | 'grid') || 'list'
+  );
   const [isDark, setIsDark] = useState(
     () => document.documentElement.classList.contains('dark')
   );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function setView(mode: 'list' | 'grid') {
+    setViewMode(mode);
+    localStorage.setItem('2fa-view', mode);
+  }
 
   function toggleTheme() {
     const next = !isDark;
@@ -292,7 +300,26 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  {/* View toggle */}
+                  <div className="flex rounded-md border border-border overflow-hidden">
+                    <button
+                      onClick={() => setView('list')}
+                      title="List view"
+                      className={cn('h-8 px-2.5 text-xs flex items-center gap-1.5 transition-colors', viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground')}
+                    >
+                      <LayoutList className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">List</span>
+                    </button>
+                    <button
+                      onClick={() => setView('grid')}
+                      title="Grid view"
+                      className={cn('h-8 px-2.5 text-xs flex items-center gap-1.5 transition-colors border-l border-border', viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground')}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Grid</span>
+                    </button>
+                  </div>
                   <button
                     onClick={regenerateCodes}
                     className="h-8 px-3 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors flex items-center gap-1.5"
@@ -310,85 +337,111 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Results list */}
-              <div className="space-y-3">
-                {results.map((result, idx) => (
-                  <div
-                    key={`${result.secret}-${idx}`}
-                    className="p-4 rounded-lg bg-secondary/50 border border-border space-y-3"
-                  >
-                    {/* Number badge + Output row */}
-                    <div className="flex items-center gap-2">
+              {/* Results — List view */}
+              {viewMode === 'list' && (
+                <div className="space-y-1.5">
+                  {results.map((result, idx) => (
+                    <div
+                      key={`${result.secret}-${idx}`}
+                      className={cn('flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50 border transition-colors', isExpiringSoon ? 'border-destructive/40' : 'border-border')}
+                    >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
                         {idx + 1}
                       </span>
-                      <code className={cn(
-                        'flex-1 font-mono text-sm bg-background px-3 py-2 rounded border overflow-x-auto whitespace-nowrap transition-colors',
-                        isExpiringSoon ? 'border-destructive/50' : 'border-border'
-                      )}>
-                        <span className="text-muted-foreground">{normalizeSecret(result.secret)}</span>
-                        <span className={isExpiringSoon ? 'text-destructive' : 'text-primary'}>|</span>
-                        <span className={cn('font-bold', isExpiringSoon ? 'text-destructive' : 'text-primary')}>
-                          {result.code}
-                        </span>
+                      <code className="flex-1 font-mono text-xs text-muted-foreground truncate min-w-0">
+                        {normalizeSecret(result.secret)}
                       </code>
-                      <button
-                        onClick={() => handleCopyOutput(result, idx)}
-                        className="h-8 w-8 rounded-md hover:bg-muted transition-colors flex items-center justify-center shrink-0"
-                        title="Copy secret|code"
+                      <span
+                        onClick={() => handleCopyCode(result.code, idx)}
+                        title="Click to copy code"
+                        className={cn('font-mono text-base font-bold tracking-widest cursor-pointer select-none hover:opacity-70 shrink-0 transition-opacity', isExpiringSoon ? 'text-destructive animate-pulse' : 'text-primary')}
                       >
-                        {copiedIndex === idx ? (
-                          <Check className="h-4 w-4 text-success" />
-                        ) : (
-                          <Copy className="h-4 w-4 text-muted-foreground" />
-                        )}
+                        {result.code.slice(0, 3)}&nbsp;{result.code.slice(3)}
+                      </span>
+                      <button
+                        onClick={() => handleCopySecret(result.secret, idx)}
+                        className="h-7 px-2 rounded border border-border text-xs hover:bg-muted transition-colors flex items-center gap-1 shrink-0"
+                        title="Copy secret"
+                      >
+                        {copiedIndex === idx + 2000 ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                        <span className="hidden sm:inline">Secret</span>
+                      </button>
+                      <button
+                        onClick={() => handleCopyCode(result.code, idx)}
+                        className="h-7 px-2 rounded border border-border text-xs hover:bg-muted transition-colors flex items-center gap-1 shrink-0"
+                        title="Copy code"
+                      >
+                        {copiedIndex === idx + 1000 ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                        <span className="hidden sm:inline">Code</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(idx)}
+                        className="h-7 w-7 rounded hover:bg-destructive/10 transition-colors flex items-center justify-center text-muted-foreground hover:text-destructive shrink-0"
+                        title="Remove"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
+                  ))}
+                </div>
+              )}
 
-                    {/* Code + action buttons */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Code:</span>
-                        <span
-                          onClick={() => handleCopyCode(result.code, idx)}
-                          title="Click to copy code"
-                          className={cn(
-                            'font-mono text-2xl font-bold tracking-widest cursor-pointer select-none transition-opacity hover:opacity-70',
-                            isExpiringSoon ? 'text-destructive animate-pulse' : 'text-primary'
-                          )}
-                        >
-                          {result.code.slice(0, 3)} {result.code.slice(3)}
+              {/* Results — Grid view */}
+              {viewMode === 'grid' && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {results.map((result, idx) => (
+                    <div
+                      key={`${result.secret}-${idx}`}
+                      className={cn('p-3 rounded-lg bg-secondary/50 border flex flex-col gap-2', isExpiringSoon ? 'border-destructive/40' : 'border-border')}
+                    >
+                      {/* Top: badge + delete */}
+                      <div className="flex items-center justify-between">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">
+                          {idx + 1}
                         </span>
+                        <button
+                          onClick={() => handleDelete(idx)}
+                          className="h-6 w-6 rounded hover:bg-destructive/10 transition-colors flex items-center justify-center text-muted-foreground hover:text-destructive"
+                          title="Remove"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap">
+                      {/* Big OTP code */}
+                      <div
+                        onClick={() => handleCopyCode(result.code, idx)}
+                        title="Click to copy code"
+                        className={cn('font-mono text-2xl font-bold tracking-widest text-center cursor-pointer select-none hover:opacity-70 transition-opacity', isExpiringSoon ? 'text-destructive animate-pulse' : 'text-primary')}
+                      >
+                        {result.code.slice(0, 3)}&nbsp;{result.code.slice(3)}
+                      </div>
+                      {/* Secret truncated */}
+                      <code className="font-mono text-xs text-muted-foreground text-center truncate">
+                        {normalizeSecret(result.secret)}
+                      </code>
+                      {/* Action buttons */}
+                      <div className="flex gap-1 justify-center">
                         <button
                           onClick={() => handleCopySecret(result.secret, idx)}
-                          className="h-8 px-3 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors flex items-center gap-1.5"
-                          title="Copy secret key only"
+                          className="h-7 px-2 rounded border border-border text-xs hover:bg-muted transition-colors flex items-center gap-1"
+                          title="Copy secret"
                         >
-                          {copiedIndex === idx + 2000 ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copiedIndex === idx + 2000 ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                           Secret
                         </button>
                         <button
                           onClick={() => handleCopyCode(result.code, idx)}
-                          className="h-8 px-3 rounded-md bg-secondary text-secondary-foreground text-xs font-medium hover:bg-secondary/80 transition-colors flex items-center gap-1.5"
-                          title="Copy code only"
+                          className="h-7 px-2 rounded border border-border text-xs hover:bg-muted transition-colors flex items-center gap-1"
+                          title="Copy code"
                         >
-                          {copiedIndex === idx + 1000 ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copiedIndex === idx + 1000 ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                           Code
-                        </button>
-                        <button
-                          onClick={() => handleDelete(idx)}
-                          className="h-8 w-8 rounded-md hover:bg-destructive/10 transition-colors flex items-center justify-center text-muted-foreground hover:text-destructive"
-                          title="Remove"
-                        >
-                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         )}
