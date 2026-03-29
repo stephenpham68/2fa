@@ -178,10 +178,6 @@ export default function App() {
     return secret.replace(/[\s-]/g, '').toLowerCase();
   }
 
-  function handleCopyOutput(result: TOTPResult, idx: number) {
-    handleCopy(`${normalizeSecret(result.secret)}|${result.code}`, idx);
-  }
-
   function handleCopySecret(secret: string, idx: number) {
     handleCopy(normalizeSecret(secret), idx + 2000);
   }
