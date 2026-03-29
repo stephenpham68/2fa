@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "2FA TOTP Authenticator",
+  "version": "1.0.0",
+  "description": "Generate TOTP 2FA codes instantly. 100% local, no server.",
+  "permissions": ["storage", "sidePanel"],
+  "action": {
+    "default_title": "Open 2FA Authenticator",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "side_panel.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
