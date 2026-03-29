@@ -63,6 +63,7 @@ export default function App() {
   const [results, setResults] = useState<TOTPResult[]>([]);
   const [timeRemaining, setTimeRemaining] = useState(getTimeRemaining());
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedCodes, setCopiedCodes] = useState<Set<number>>(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>(
     () => (localStorage.getItem('2fa-view') as 'list' | 'grid') || 'grid'
@@ -184,14 +185,24 @@ export default function App() {
 
   function handleCopyCode(code: string, idx: number) {
     handleCopy(code, idx + 1000);
+    setCopiedCodes((prev) => new Set(prev).add(idx));
   }
 
   function handleDelete(idx: number) {
     setResults((prev) => prev.filter((_, i) => i !== idx));
+    setCopiedCodes((prev) => {
+      const next = new Set<number>();
+      for (const i of prev) {
+        if (i < idx) next.add(i);
+        else if (i > idx) next.add(i - 1);
+      }
+      return next;
+    });
   }
 
   function handleClearAll() {
     setResults([]);
+    setCopiedCodes(new Set());
   }
 
   const progressPercent = (timeRemaining / 30) * 100;
@@ -351,7 +362,7 @@ export default function App() {
                   {results.map((result, idx) => (
                     <div
                       key={`${result.secret}-${idx}`}
-                      className={cn('flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50 border transition-colors', isExpiringSoon ? 'border-destructive/40' : 'border-border')}
+                      className={cn('flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50 border transition-colors', isExpiringSoon ? 'border-destructive/40' : copiedCodes.has(idx) ? 'border-yellow-400 bg-yellow-400/5' : 'border-border')}
                     >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
                         {idx + 1}
@@ -400,7 +411,7 @@ export default function App() {
                   {results.map((result, idx) => (
                     <div
                       key={`${result.secret}-${idx}`}
-                      className={cn('p-3 rounded-lg bg-secondary/50 border flex flex-col gap-2', isExpiringSoon ? 'border-destructive/40' : 'border-border')}
+                      className={cn('p-3 rounded-lg bg-secondary/50 border flex flex-col gap-2 transition-colors', isExpiringSoon ? 'border-destructive/40' : copiedCodes.has(idx) ? 'border-yellow-400 bg-yellow-400/5' : 'border-border')}
                     >
                       {/* Top: badge + delete */}
                       <div className="flex items-center justify-between">
