@@ -65,7 +65,7 @@ export default function App() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>(
-    () => (localStorage.getItem('2fa-view') as 'list' | 'grid') || 'list'
+    () => (localStorage.getItem('2fa-view') as 'list' | 'grid') || 'grid'
   );
   const [isDark, setIsDark] = useState(
     () => document.documentElement.classList.contains('dark')
@@ -316,6 +316,18 @@ export default function App() {
                       <span className="hidden sm:inline">Grid</span>
                     </button>
                   </div>
+                  <button
+                    onClick={() => {
+                      const all = results.map((r) => `${normalizeSecret(r.secret)} ${r.code}`).join('\n');
+                      navigator.clipboard.writeText(all);
+                      toast.success(`Copied ${results.length} codes`);
+                    }}
+                    className="h-8 px-3 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors flex items-center gap-1.5"
+                    title="Copy all codes"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy All
+                  </button>
                   <button
                     onClick={regenerateCodes}
                     className="h-8 px-3 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors flex items-center gap-1.5"
